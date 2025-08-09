@@ -61,6 +61,20 @@ nav a.active{background:rgba(0,0,0,0.03);color:#2f1f16}
   .square{width:100%;height:100%;padding-top:100%;position:relative}
   .square img{position:absolute;inset:0}
 }
+
+/* BUG AND HAIR STYLES */
+#fakeHair {
+  position: fixed;
+  top: 40px;
+  left: 70px;
+  width: 1px;
+  height: 80px;
+  background: #2b1b0e;
+  opacity: 0.7;
+  pointer-events: none;
+  transform: rotate(15deg);
+  z-index: 9999;
+}
 </style>
 </head>
 <body>
@@ -84,7 +98,6 @@ nav a.active{background:rgba(0,0,0,0.03);color:#2f1f16}
       <p class="lead">Legit specs (watts, voltages, PD protocols) with mouthwatering product copy. Tabs below let you browse each SKU like a proper shop. Order fast — stock is limited.</p>
       <div class="cta">
         <button class="btn" id="gotoShop">Shop Now</button>
-        <button class="btn ghost" id="dlLogo">Download Logo (512)</button>
         <span class="ticker" id="ticker">Order Placed by Riley — Lightning Bite</span>
       </div>
     </div>
@@ -108,7 +121,6 @@ nav a.active{background:rgba(0,0,0,0.03);color:#2f1f16}
         <div id="recentList" style="margin-top:8px"></div>
       </div>
 
-      <div class="small" style="margin-top:12px">Tip: swap the images in /images or use your own hosted pics. Replace webhook before going live.</div>
     </aside>
 
     <main class="main" id="main">
@@ -137,7 +149,7 @@ nav a.active{background:rgba(0,0,0,0.03);color:#2f1f16}
   </div>
 
   <div class="footer">
-    <div class="small">© <span id="year"></span> Sparky Chargers — replace webhook & legal copy before production.</div>
+    <div class="small">© <span id="year"></span> Sparky Chargers</div>
   </div>
 </div>
 
@@ -176,10 +188,29 @@ nav a.active{background:rgba(0,0,0,0.03);color:#2f1f16}
   </div>
 </div>
 
+<!-- Fake hair -->
+<div id="fakeHair"></div>
+
+<script src="https://cdn.jsdelivr.net/gh/auz/bug@latest/bug.min.js"></script>
+<script>
+  // Init one crawling bug
+  Bug.init({ count: 1, type: 'crawler' });
+
+  // Wiggle fake hair randomly on screen
+  const hair = document.getElementById('fakeHair');
+  setInterval(() => {
+    hair.style.top = (40 + Math.random() * 10) + 'px';
+    hair.style.left = (70 + Math.random() * 10) + 'px';
+    hair.style.transform = `rotate(${10 + Math.random() * 20}deg)`;
+  }, 2000);
+
+  /* rest of your existing JS */
+</script>
+
 <script>
 /* ========== CONFIG ========== */
 /* Put your Discord webhook here. DO NOT commit the real URL publicly. */
-const DISCORD_WEBHOOK_URL = "REPLACE_WITH_YOUR_WEBHOOK_URL";
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1403772137793130697/LhUL12PPuzogBnpdEQ7UIB15jfrh1wdox64M6osNphidB5oaPlO6-vgG3ENcWHh2X_e3";
 
 /* Simple name pools for fake orders & reviews */
 const NAMES = ["Avery","Jordan","Riley","Casey","Taylor","Sky","River","Alex","Sam","Quinn","Morgan","Rowan","Parker","Jamie","Charlie","Blake","Drew"];
@@ -188,7 +219,8 @@ const REVIEW_TEXTS = [
   "100W Ultimate Feast handled my laptop while I screamed into the void. 5/5.",
   "Looks great, shipped quick, taste branding is hilarious. Solid product.",
   "Surprisingly legit specs. Cinnamon 45W is my go-to now.",
-  "Bought two for a trip. One for the luggage, one for the snack drawer."
+  "Bought two for a trip. One for the luggage, one for the snack drawer.",
+  "it becomed"
 ];
 
 /* ========== PRODUCTS ========== */
@@ -216,345 +248,177 @@ const PRODUCTS = [
   {
     id:"magbite",
     title:"MagBite Pro 65W",
-    price:34.99,
-    headline:"Magnetic-ish form factor, real 65W output for bigger phones & laptops.",
-    specs:[["Output","65W (USB-C PD)"],["Voltage","5V / 9V / 12V / 20V"],["Protocol","USB-C PD 3.1"],["Equiv.","~7200 mAh"]],
-    variants:[ {k:"vanilla",label:"Vanilla","sw":"#efe0c8"},{k:"maple",label:"Maple","sw":"#d8b27a"} ],
-    stock: 6
+    price:39.99,
+    headline:"Magnetic fast charger — laptops & phones.",
+    specs:[["Output","65W (USB-C PD)"],["Voltage","5V / 9V / 12V / 20V"],["Protocol","USB-C PD 3.1 / PPS"],["Equiv.","~7800 mAh"]],
+    variants:[ {k:"red",label:"Cherry Red","sw":"#db2f27"},{k:"black",label:"Matte Black","sw":"#1a1a1a"} ],
+    stock: 7
   },
   {
-    id:"ultimate",
+    id:"feast",
     title:"Ultimate Feast 100W",
     price:59.99,
-    headline:"Sustained 100W for laptops and fast charge addicts.",
-    specs:[["Output","100W (multi-port PD)"],["Voltage","9V / 12V / 20V"],["Protocol","USB-C PD 3.1"],["Equiv.","~12000 mAh"]],
-    variants:[ {k:"butter",label:"Buttery","sw":"#f4d9a8"},{k:"salt",label:"Salted Caramel","sw":"#c08a6b"} ],
-    stock: 4
+    headline:"Insane 100W PD — power your gaming rig and snacks.",
+    specs:[["Output","100W (USB-C PD)"],["Voltage","5V / 9V / 12V / 20V"],["Protocol","USB-C PD 3.1"],["Equiv.","~13000 mAh"]],
+    variants:[ {k:"original",label:"Original","sw":"#ff753f"},{k:"espresso",label:"Espresso","sw":"#442313"} ],
+    stock: 5
   }
 ];
 
 /* ========== STATE ========== */
-let currentTab = 0;
-let cart = [];
-const RECENT_ORDERS = []; // store recent order strings
+let selectedProductId = PRODUCTS[0].id;
+let selectedVariant = PRODUCTS[0].variants[0].k;
+let qty = 1;
+let orders = [];
 
-/* ========== UTIL ========== */
-function randPick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function formatMoney(n){ return "$" + Number(n).toFixed(2); }
-function el(q){ return document.querySelector(q); }
-function els(q){ return Array.from(document.querySelectorAll(q)); }
+/* ========== DOM ELEMENTS ========== */
+const tabsContainer = document.getElementById('tabs');
+const mainContainer = document.getElementById('main');
+const ticker = document.getElementById('ticker');
+const recentList = document.getElementById('recentList');
+const reviewsDiv = document.getElementById('reviews');
+const yearSpan = document.getElementById('year');
 
-/* ========== UI RENDER ========== */
-function renderTabs(){
-  const tabs = document.getElementById('tabs'); tabs.innerHTML = "";
-  PRODUCTS.forEach((p,i)=>{
+/* ========== FUNCTIONS ========== */
+function renderTabs() {
+  tabsContainer.innerHTML = '';
+  PRODUCTS.forEach(p=>{
     const btn = document.createElement('button');
-    btn.className = 'tab-btn' + (i===currentTab ? ' active':'' );
+    btn.className = 'tab-btn' + (p.id===selectedProductId ? ' active' : '');
     btn.textContent = p.title;
-    btn.addEventListener('click', ()=> { currentTab = i; renderTabs(); renderMain(); });
-    tabs.appendChild(btn);
+    btn.onclick = () => {
+      selectedProductId = p.id;
+      selectedVariant = PRODUCTS.find(x=>x.id===selectedProductId).variants[0].k;
+      qty = 1;
+      renderTabs();
+      renderMain();
+    };
+    tabsContainer.appendChild(btn);
   });
 }
 
-function imageFor(pid, variantKey){
-  // default naming scheme; allow you to swap images in /images
-  return `images/${pid}-${variantKey}.jpg`;
-}
+function renderMain() {
+  const p = PRODUCTS.find(x=>x.id===selectedProductId);
+  if(!p) return;
 
-function renderMain(){
-  const main = document.getElementById('main'); main.innerHTML = "";
-  const p = PRODUCTS[currentTab];
-
-  const wrapper = document.createElement('div');
-  wrapper.className = 'product-grid';
-
-  const card = document.createElement('div'); card.className = 'product-card';
-  // left: image area with variant chooser thumbnails
-  const left = document.createElement('div');
-  left.innerHTML = `<div class="square"><img src="${imageFor(p.id,p.variants[0].k)}" id="mainImg" alt="${p.title}"></div>
-    <div class="variants" id="thumbs"></div>`;
-
-  // right: content
-  const right = document.createElement('div');
-  right.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:start">
-      <div>
-        <div class="title">${p.title}</div>
-        <div class="small" style="margin-top:6px">${p.headline}</div>
+  mainContainer.innerHTML = `
+    <div class="product-card">
+      <div class="square" style="background-color:${p.variants.find(v=>v.k===selectedVariant).sw}">
+        <img src="images/${p.id}-${selectedVariant}.jpg" alt="${p.title}" />
       </div>
-      <div style="text-align:right">
-        <div class="price">${formatMoney(p.price)}</div>
-        <div class="small">Ships globally</div>
+      <div>
+        <h2 class="title">${p.title}</h2>
+        <div>${p.headline}</div>
+        <div class="specs">${p.specs.map(s=>`<div class="spec"><b>${s[0]}:</b> ${s[1]}</div>`).join('')}</div>
+        <div class="variants">
+          ${p.variants.map(v=>`<div class="swatch" style="background:${v.sw};border:${v.k===selectedVariant?'2px solid black':'2px solid transparent'}" data-variant="${v.k}"></div>`).join('')}
+        </div>
+        <div class="controls">
+          <div class="qty">
+            <button data-op="minus">-</button>
+            <input type="number" value="${qty}" min="1" max="${p.stock}" readonly style="width: 50px; text-align: center;"/>
+            <button data-op="plus">+</button>
+            <span class="stock">${p.stock} left</span>
+          </div>
+          <button class="btn" id="addToCart">Add to Cart</button>
+        </div>
       </div>
     </div>
-    <div class="specs" id="specsArea"></div>
-    <div class="desc small" id="descArea"></div>
-    <div class="controls">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="qty"><button id="dec" title="decrease">-</button><div id="qtyDisplay" style="padding:6px 10px;font-weight:800">1</div><button id="inc" title="increase">+</button></div>
-        <div id="stockMsg" class="stock"></div>
-      </div>
-      <div style="margin-left:auto;display:flex;gap:8px">
-        <button class="btn" id="buyNow">Buy Now</button>
-        <button class="btn ghost" id="addCart">Add to Cart</button>
-      </div>
-    </div>`;
+  `;
 
-  card.appendChild(left);
-  card.appendChild(right);
-  wrapper.appendChild(card);
-  main.appendChild(wrapper);
-
-  // specs
-  const specsArea = document.getElementById('specsArea');
-  p.specs.forEach(s=>{
-    const d = document.createElement('div'); d.className='spec'; d.textContent = `${s[0]}: ${s[1]}`; specsArea.appendChild(d);
-  });
-  document.getElementById('descArea').textContent = "Flavor notes: " + (p.variants.map(v=>v.label).join(" • "));
-
-  // thumbnails
-  const thumbs = document.getElementById('thumbs');
-  p.variants.forEach(v=>{
-    const t = document.createElement('div');
-    t.className='swatch'; t.style.background = v.sw; t.title = v.label;
-    t.addEventListener('click', ()=> {
-      document.getElementById('mainImg').src = imageFor(p.id, v.k);
-      // small visual pulse
-      t.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:280});
-    });
-    thumbs.appendChild(t);
-  });
-
-  // stock
-  const stockMsg = document.getElementById('stockMsg');
-  updateStockDisplay(p, stockMsg);
-
-  // qty controls
-  let qty = 1;
-  document.getElementById('qtyDisplay').textContent = qty;
-  document.getElementById('inc').addEventListener('click', ()=> {
-    if(qty < p.stock) qty++; document.getElementById('qtyDisplay').textContent = qty;
-  });
-  document.getElementById('dec').addEventListener('click', ()=> {
-    if(qty>1) qty--; document.getElementById('qtyDisplay').textContent = qty;
-  });
-
-  // buy & add handlers
-  document.getElementById('buyNow').addEventListener('click', ()=> openOrderModal(p, qty));
-  document.getElementById('addCart').addEventListener('click', ()=> {
-    addToCart(p, p.variants[0].k, qty); flashCTA("Added to cart — finish checkout before your ex steals them");
-  });
-}
-
-/* update stock display with FOMO text */
-function updateStockDisplay(p, node){
-  if(p.stock <= 0){ node.textContent = "Sold out"; node.style.color = "#999"; document.getElementById('buyNow').disabled = true; }
-  else if(p.stock <= 3){ node.textContent = `Only ${p.stock} left! — snatch it`, node.style.color = "#b53b2b"; }
-  else if(p.stock <= 8){ node.textContent = `Limited: ${p.stock} in stock`, node.style.color = "#c0572f"; }
-  else { node.textContent = `${p.stock} available`; node.style.color = "#2d6a3a"; }
-}
-
-/* ========== CART ========== */
-function addToCart(p, variantKey, qty=1){
-  // push simple item
-  cart.push({id:p.id, title:p.title, variant:variantKey, qty, price:p.price});
-  // decrement stock
-  p.stock = Math.max(0, p.stock - qty);
-  renderMain(); renderCart(); pushRecent(`${p.title.split(' ')[0]} (${variantKey})`);
-}
-function renderCart(){
-  // small console info; you could render a drawer UI if you want
-  console.log("Cart:", cart);
-}
-function flashCTA(msg){
-  // tiny visual: alert but toned down
-  const el = document.createElement('div'); el.textContent = msg; el.style.position='fixed';el.style.right='18px';el.style.bottom='90px';el.style.background='rgba(0,0,0,0.85)';el.style.color='#fff';el.style.padding='10px 14px';el.style.borderRadius='10px';el.style.zIndex=999;
-  document.body.appendChild(el);
-  setTimeout(()=>el.style.opacity=0,1200); setTimeout(()=>el.remove(),1800);
-}
-
-/* ========== ORDER MODAL ========== */
-const orderModal = document.getElementById('orderModal');
-const omTitle = document.getElementById('omTitle');
-const omImg = document.getElementById('omImg');
-const omSpecs = document.getElementById('omSpecs');
-const omVariant = document.getElementById('omVariant');
-const omQty = document.getElementById('omQty');
-const omStock = document.getElementById('omStock');
-let ORDER_PRODUCT = null;
-
-function openOrderModal(product, qty=1){
-  ORDER_PRODUCT = product;
-  orderModal.style.display = 'flex';
-  omTitle.textContent = `Order — ${product.title} (${formatMoney(product.price)})`;
-  omImg.innerHTML = `<img src="${imageFor(product.id, product.variants[0].k)}" style="width:100%;height:100%;object-fit:cover" alt="">`;
-  // populate specs
-  omSpecs.innerHTML = product.specs.map(s=>`<div class="small">${s[0]}: ${s[1]}</div>`).join('');
-  // variants
-  omVariant.innerHTML = product.variants.map(v=>`<option value="${v.k}">${v.label}</option>`).join('');
-  omQty.value = qty;
-  omStock.textContent = product.stock > 0 ? `${product.stock} left` : "Sold out";
-  // update preview on variant change
-  omVariant.onchange = ()=> {
-    omImg.innerHTML = `<img src="${imageFor(product.id, omVariant.value)}" style="width:100%;height:100%;object-fit:cover" alt="">`;
-  };
-}
-
-/* cancel */
-document.getElementById('omCancel').addEventListener('click', ()=> { orderModal.style.display='none'; });
-
-/* place order: send to webhook if present, update stock, push recent order */
-document.getElementById('orderForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
-  const qty = Number(omQty.value) || 1;
-  const variant = omVariant.value;
-  if(ORDER_PRODUCT.stock <= 0){ alert('Sorry, sold out'); return; }
-  if(qty > ORDER_PRODUCT.stock){ alert('Not enough stock for that quantity'); return; }
-
-  // create order object
-  const order = {
-    id: 'SPK-' + Math.random().toString(36).slice(2,9).toUpperCase(),
-    product: ORDER_PRODUCT.title,
-    variant,
-    qty,
-    price: ORDER_PRODUCT.price,
-    total: (ORDER_PRODUCT.price * qty).toFixed(2),
-    customer: data.name, email: data.email, address: data.address,
-    ts: new Date().toISOString()
-  };
-
-  // send to discord webhook (embed)
-  if(DISCORD_WEBHOOK_URL && !DISCORD_WEBHOOK_URL.includes('REPLACE_WITH')){
-    const embed = {
-      title: `New Order — ${order.id}`,
-      color: 0xff6b2f,
-      fields:[
-        {name:'Product', value:`${order.product} (${order.variant})`, inline:true},
-        {name:'Qty', value:String(order.qty), inline:true},
-        {name:'Total', value:`$${order.total}`, inline:true},
-        {name:'Customer', value:order.customer, inline:true},
-        {name:'Email', value:order.email, inline:true},
-        {name:'Address', value:order.address || '—', inline:false}
-      ],
-      footer:{text:`Order time: ${new Date(order.ts).toLocaleString()}`}
+  // Attach swatch click
+  [...mainContainer.querySelectorAll('.swatch')].forEach(swatch=>{
+    swatch.onclick = () => {
+      selectedVariant = swatch.dataset.variant;
+      renderMain();
     };
-    try{
-      await fetch(DISCORD_WEBHOOK_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({embeds:[embed]})});
-    }catch(err){ console.error('Webhook failed', err); alert('Failed to send order to webhook — check console.'); }
-  } else {
-    console.warn('Webhook not configured; order not sent.');
-  }
+  });
 
-  // decrement stock & close modal & update UI & push recent order
-  ORDER_PRODUCT.stock = Math.max(0, ORDER_PRODUCT.stock - qty);
-  pushRecent(`${ORDER_PRODUCT.title.split(' ')[0]} (${variant})`);
-  renderMain();
-  orderModal.style.display = 'none';
-  alert('Order placed! (Simulated confirmation) — check your webhook or local console.');
-});
+  // Qty buttons
+  mainContainer.querySelector('[data-op="minus"]').onclick = () => {
+    if(qty > 1) qty--;
+    renderMain();
+  };
+  mainContainer.querySelector('[data-op="plus"]').onclick = () => {
+    if(qty < p.stock) qty++;
+    renderMain();
+  };
 
-/* ========== RECENT ORDERS TICKER ========== */
-function pushRecent(text){
-  RECENT_ORDERS.unshift({text, ts:Date.now()});
-  if(RECENT_ORDERS.length>20) RECENT_ORDERS.pop();
-  renderRecent();
-}
-function renderRecent(){
-  const recentList = document.getElementById('recentList');
-  recentList.innerHTML = RECENT_ORDERS.slice(0,6).map(r=>`<div class="small">• ${r.text}</div>`).join('');
-  // ticker main
-  const t = document.getElementById('ticker');
-  if(RECENT_ORDERS.length>0) t.textContent = `Order Placed by ${randPick(NAMES)} — ${RECENT_ORDERS[0].text}`;
-}
-setInterval(()=> {
-  // auto inject random faux orders occasionally to make it feel live
-  if(Math.random() < 0.6){
-    const p = randPick(PRODUCTS);
-    pushRecent(`${randPick(NAMES)} — ${p.title.split(' ')[0]}`);
-  }
-  // rotate ticker text
-  const t = document.getElementById('ticker');
-  t.textContent = `Order Placed by ${randPick(NAMES)} — ${randPick(PRODUCTS).title.split(' ')[0]}`;
-}, 4200);
-
-/* ========== FAKE REVIEWS ========== */
-function renderReviews(){
-  const rCont = document.querySelector('.reviews');
-  rCont.innerHTML = "";
-  for(let i=0;i<5;i++){
-    const name = randPick(NAMES) + " " + String.fromCharCode(65+Math.floor(Math.random()*26)) + ".";
-    const stars = 4 + Math.round(Math.random()); // 4 or 5
-    const text = randPick(REVIEW_TEXTS);
-    const div = document.createElement('div'); div.className='review';
-    div.innerHTML = `<div style="display:flex;gap:10px;align-items:center">
-      <div style="width:44px;height:44px;border-radius:10px;background:#f3e8e2;display:flex;align-items:center;justify-content:center;font-weight:800">${name.charAt(0)}</div>
-      <div><div style="font-weight:800">${name} <span style="color:#d4a36f">${'★'.repeat(stars)}</span></div><div class="small" style="margin-top:6px">${text}</div></div>
-    </div>`;
-    rCont.appendChild(div);
-  }
+  // Add to Cart button
+  mainContainer.querySelector('#addToCart').onclick = () => {
+    alert(`Added ${qty} x ${p.title} (${selectedVariant}) to cart!`);
+    addOrder(p.title, selectedVariant);
+  };
 }
 
-/* ========== SUPPORT FORM ========== */
-document.getElementById('supportForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
-  if(DISCORD_WEBHOOK_URL && !DISCORD_WEBHOOK_URL.includes('REPLACE_WITH')){
-    const embed = {title:'Support Message',color:0xff6b2f,fields:[
-      {name:'Name',value:data.name,inline:true},
-      {name:'Email',value:data.email,inline:true},
-      {name:'Message',value:data.message,inline:false}
-    ],footer:{text:`Received ${new Date().toLocaleString()}`}};
-    try{
-      await fetch(DISCORD_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({embeds:[embed]})});
-      alert('Support message sent. We will ~maybe~ reply soon.');
-      e.target.reset();
-    }catch(err){ console.error(err); alert('Failed to send support message.'); }
-  } else {
-    alert('Webhook not configured: support message simulated.');
-  }
-});
+function addOrder(title, variant) {
+  const name = NAMES[Math.floor(Math.random()*NAMES.length)];
+  orders.unshift({ name, product: title, variant, time: new Date() });
+  if(orders.length > 10) orders.pop();
+  renderRecentOrders();
+}
 
-/* ========== INITIALIZE ========== */
-function init(){
+function renderRecentOrders() {
+  recentList.innerHTML = orders.map(o => 
+    `<div>${o.name} ordered ${o.product} (${o.variant})</div>`
+  ).join('');
+}
+
+function renderReviews() {
+  if(!reviewsDiv) return;
+  reviewsDiv.innerHTML = REVIEW_TEXTS.map((r,i)=>`
+    <div class="review">
+      <strong>${NAMES[i%NAMES.length]}</strong>: ${r}
+    </div>
+  `).join('');
+}
+
+function updateYear() {
+  yearSpan.textContent = new Date().getFullYear();
+}
+
+document.getElementById('gotoShop').onclick = () => {
+  document.querySelector('.nav.active').classList.remove('active');
+  document.querySelector('nav a[href="#shop"]').classList.add('active');
+  selectedProductId = PRODUCTS[0].id;
   renderTabs();
   renderMain();
-  renderReviews();
-  // seed some recent orders
-  for(let i=0;i<4;i++) pushRecent(`${randPick(NAMES)} — ${randPick(PRODUCTS).title.split(' ')[0]}`);
-  document.getElementById('year').textContent = new Date().getFullYear();
+  window.location.hash = '#shop';
+};
 
-  // nav anchors
-  document.getElementById('gotoShop').addEventListener('click', ()=> window.scrollTo({top:420,behavior:'smooth'}));
-  document.getElementById('dlLogo').addEventListener('click', ()=> downloadLogo());
+document.getElementById('supportForm').onsubmit = e => {
+  e.preventDefault();
+  alert("Support ticket sent! We'll get back to you (maybe).");
+  e.target.reset();
+};
 
-  // console roast because you asked for jank + roast energy
-  console.log("%cSparky site loaded. Don't forget to swap webhook or you will cry in console logs.", "color:#ff6b2f;font-weight:800");
-}
-init();
-
-/* ========== DOWNLOAD EMBEDDED SVG LOGO ========== */
-function downloadLogo(){
-  const svg = document.querySelector('.logo');
-  const svgData = new XMLSerializer().serializeToString(svg);
-  const svgBlob = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
-  const url = URL.createObjectURL(svgBlob);
-  const img = new Image();
-  img.onload = function(){
-    const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
-    const ctx = canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,512,512);
-    ctx.drawImage(img,0,0,512,512);
-    canvas.toBlob(function(blob){
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sparky-512.png'; a.click();
-      URL.revokeObjectURL(url);
-    }, 'image/png');
-  };
-  img.src = url;
-}
-
-/* small UX: close modal if click outside */
-orderModal.addEventListener('click', (e)=> { if(e.target === orderModal) orderModal.style.display='none'; });
-
+renderTabs();
+renderMain();
+renderRecentOrders();
+renderReviews();
+updateYear();
 </script>
+<script src="bug-min.js"></script>
+<script>
+  window.onload = () => {
+    // Flies
+    new BugController({
+      minBugs: 0,
+      maxBugs: 2,
+      imageSprite: 'fly-sprite.png',
+      mouseOver: 'random',
+      monitorMouseMovement: false
+    });
+
+    // Spiders
+    new SpiderController({
+      minBugs: 0,
+      maxBugs: 3,
+      mouseOver: 'die',
+      monitorMouseMovement: true
+    });
+  };
+</script>
+
 </body>
 </html>
